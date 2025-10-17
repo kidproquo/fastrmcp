@@ -27,8 +27,7 @@ RUN R -q -e "install.packages(c( \
 
 
 RUN mkdir /app
-COPY rmcp_fastmcp /app/rmcp_fastmcp
-WORKDIR /app/rmcp_fastmcp
+COPY rmcp_fastmcp/requirements.txt /app/.
 
 # ---- Python: create a venv to avoid PEP 668 issues ----
 ENV VENV=/opt/venv
@@ -36,10 +35,13 @@ RUN set -eux; \
     python3 -m venv "$VENV"; \
     . "$VENV/bin/activate"; \
     pip install --upgrade pip; \
-    pip install -r requirements.txt
+    pip install -r /app/requirements.txt
 
 # Ensure venv tools are first on PATH for subsequent steps/CI
 ENV PATH="$VENV/bin:$PATH"
 
 EXPOSE 3003
+
+COPY rmcp_fastmcp /app/rmcp_fastmcp
+WORKDIR /app/rmcp_fastmcp
 CMD ["python", "run_server.py", "http", "3003"]
