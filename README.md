@@ -125,6 +125,9 @@ The server runs in stdio mode by default, making it compatible with any MCP clie
 
 ## Example Usage
 
+### Simple prompt
+`I want to analyze if there's a correlation between study hours [2, 3, 1, 4, 5, 3, 6, 2, 4, 5] and test scores [65, 70, 60, 75, 85, 72, 90, 68, 78, 82]. Calculate the correlation and create a scatter plot.`
+
 ### Load Example Data
 ```python
 result = await load_example(dataset_name="iris")
