@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Union
 import logging
+from datetime import datetime
 
 from fastmcp import FastMCP
 from pydantic import BaseModel, Field
@@ -90,6 +91,10 @@ All tools provide professionally formatted output with markdown tables, statisti
 
 # Initialize R executor
 r_executor = RExecutor()
+
+# Define output directory for generated plots
+PLOTS_DIR = Path(__file__).parent / "generated_plots"
+PLOTS_DIR.mkdir(exist_ok=True)
 
 # ============================================================================
 # Data Models
@@ -249,25 +254,24 @@ async def correlation_analysis(data: Dict[str, List[Any]], variables: Optional[L
 @mcp.tool()
 async def regression_plot(data: Dict[str, List[Any]], formula: str, return_image: bool = True) -> Dict[str, Any]:
     """Create regression diagnostic plots."""
+    # Generate unique filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    filename = f"regression_plot_{timestamp}.png"
+    file_path = str(PLOTS_DIR / filename)
+
     script = """
     library(ggplot2)
-    library(base64enc)
 
     df <- as.data.frame(data)
     model <- lm(as.formula(formula), data = df)
 
     if (return_image) {
-        temp_file <- tempfile(fileext = ".png")
-        png(temp_file, width = 800, height = 800)
+        png(output_file, width = 800, height = 800)
         par(mfrow = c(2, 2))
         plot(model)
         dev.off()
 
-        img_data <- readBin(temp_file, "raw", file.info(temp_file)$size)
-        img_base64 <- base64encode(img_data)
-        unlink(temp_file)
-
-        result <- list(image = img_base64, format = "png")
+        result <- list(file_path = output_file, name = filename, format = "png")
     } else {
         result <- list(
             residuals = residuals(model),
@@ -275,7 +279,7 @@ async def regression_plot(data: Dict[str, List[Any]], formula: str, return_image
         )
     }
     """
-    return await r_executor.execute(script, {"data": data, "formula": formula, "return_image": return_image})
+    return await r_executor.execute(script, {"data": data, "formula": formula, "return_image": return_image, "output_file": file_path, "filename": filename})
 
 # ============================================================================
 # 2. TIME SERIES ANALYSIS (6 tools)
@@ -383,9 +387,13 @@ async def difference(data: Dict[str, List[Any]], variables: List[str], order: in
 @mcp.tool()
 async def time_series_plot(values: List[float], dates: Optional[List[str]] = None, title: str = "Time Series", return_image: bool = True) -> Dict[str, Any]:
     """Create time series plots."""
+    # Generate unique filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    filename = f"time_series_plot_{timestamp}.png"
+    file_path = str(PLOTS_DIR / filename)
+
     script = """
     library(ggplot2)
-    library(base64enc)
 
     if (is.null(dates)) {
         dates <- seq_along(values)
@@ -400,19 +408,13 @@ async def time_series_plot(values: List[float], dates: Optional[List[str]] = Non
             theme_minimal() +
             ggtitle(title)
 
-        temp_file <- tempfile(fileext = ".png")
-        ggsave(temp_file, plot = p, width = 10, height = 6)
-
-        img_data <- readBin(temp_file, "raw", file.info(temp_file)$size)
-        img_base64 <- base64encode(img_data)
-        unlink(temp_file)
-
-        result <- list(image = img_base64, format = "png")
+        ggsave(output_file, plot = p, width = 10, height = 6)
+        result <- list(file_path = output_file, name = filename, format = "png")
     } else {
         result <- list(values = values, dates = dates)
     }
     """
-    return await r_executor.execute(script, {"values": values, "dates": dates, "title": title, "return_image": return_image})
+    return await r_executor.execute(script, {"values": values, "dates": dates, "title": title, "return_image": return_image, "output_file": file_path, "filename": filename})
 
 # ============================================================================
 # 3. STATISTICAL TESTING (5 tools)
@@ -814,9 +816,13 @@ async def random_forest(data: Dict[str, List[Any]], formula: str, n_trees: int =
 @mcp.tool()
 async def scatter_plot(data: Dict[str, List[Any]], x: str, y: str, group: Optional[str] = None, title: str = "", return_image: bool = True) -> Dict[str, Any]:
     """Create scatter plots with trend lines."""
+    # Generate unique filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    filename = f"scatter_plot_{timestamp}.png"
+    file_path = str(PLOTS_DIR / filename)
+
     script = """
     library(ggplot2)
-    library(base64enc)
 
     df <- as.data.frame(data)
 
@@ -833,26 +839,24 @@ async def scatter_plot(data: Dict[str, List[Any]], x: str, y: str, group: Option
     p <- p + theme_minimal() + ggtitle(title)
 
     if (return_image) {
-        temp_file <- tempfile(fileext = ".png")
-        ggsave(temp_file, plot = p, width = 8, height = 6)
-
-        img_data <- readBin(temp_file, "raw", file.info(temp_file)$size)
-        img_base64 <- base64encode(img_data)
-        unlink(temp_file)
-
-        result <- list(image = img_base64, format = "png")
+        ggsave(output_file, plot = p, width = 8, height = 6)
+        result <- list(file_path = output_file, name = filename, format = "png")
     } else {
         result <- list(correlation = cor(df[[x]], df[[y]], use = "complete.obs"))
     }
     """
-    return await r_executor.execute(script, {"data": data, "x": x, "y": y, "group": group, "title": title, "return_image": return_image})
+    return await r_executor.execute(script, {"data": data, "x": x, "y": y, "group": group, "title": title, "return_image": return_image, "output_file": file_path, "filename": filename})
 
 @mcp.tool()
 async def histogram(data: Dict[str, List[Any]], variable: str, bins: int = 30, title: str = "", return_image: bool = True) -> Dict[str, Any]:
     """Create histograms with density overlays."""
+    # Generate unique filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    filename = f"histogram_{timestamp}.png"
+    file_path = str(PLOTS_DIR / filename)
+
     script = """
     library(ggplot2)
-    library(base64enc)
 
     df <- as.data.frame(data)
 
@@ -863,14 +867,8 @@ async def histogram(data: Dict[str, List[Any]], variable: str, bins: int = 30, t
         ggtitle(title)
 
     if (return_image) {
-        temp_file <- tempfile(fileext = ".png")
-        ggsave(temp_file, plot = p, width = 8, height = 6)
-
-        img_data <- readBin(temp_file, "raw", file.info(temp_file)$size)
-        img_base64 <- base64encode(img_data)
-        unlink(temp_file)
-
-        result <- list(image = img_base64, format = "png")
+        ggsave(output_file, plot = p, width = 8, height = 6)
+        result <- list(file_path = output_file, name = filename, format = "png")
     } else {
         result <- list(
             mean = mean(df[[variable]], na.rm = TRUE),
@@ -879,14 +877,18 @@ async def histogram(data: Dict[str, List[Any]], variable: str, bins: int = 30, t
         )
     }
     """
-    return await r_executor.execute(script, {"data": data, "variable": variable, "bins": bins, "title": title, "return_image": return_image})
+    return await r_executor.execute(script, {"data": data, "variable": variable, "bins": bins, "title": title, "return_image": return_image, "output_file": file_path, "filename": filename})
 
 @mcp.tool()
 async def boxplot(data: Dict[str, List[Any]], variable: str, group: Optional[str] = None, title: str = "", return_image: bool = True) -> Dict[str, Any]:
     """Create box plots for distribution comparison."""
+    # Generate unique filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    filename = f"boxplot_{timestamp}.png"
+    file_path = str(PLOTS_DIR / filename)
+
     script = """
     library(ggplot2)
-    library(base64enc)
 
     df <- as.data.frame(data)
 
@@ -903,14 +905,8 @@ async def boxplot(data: Dict[str, List[Any]], variable: str, group: Optional[str
     }
 
     if (return_image) {
-        temp_file <- tempfile(fileext = ".png")
-        ggsave(temp_file, plot = p, width = 8, height = 6)
-
-        img_data <- readBin(temp_file, "raw", file.info(temp_file)$size)
-        img_base64 <- base64encode(img_data)
-        unlink(temp_file)
-
-        result <- list(image = img_base64, format = "png")
+        ggsave(output_file, plot = p, width = 8, height = 6)
+        result <- list(file_path = output_file, name = filename, format = "png")
     } else {
         result <- list(
             median = median(df[[variable]], na.rm = TRUE),
@@ -919,15 +915,19 @@ async def boxplot(data: Dict[str, List[Any]], variable: str, group: Optional[str
         )
     }
     """
-    return await r_executor.execute(script, {"data": data, "variable": variable, "group": group, "title": title, "return_image": return_image})
+    return await r_executor.execute(script, {"data": data, "variable": variable, "group": group, "title": title, "return_image": return_image, "output_file": file_path, "filename": filename})
 
 @mcp.tool()
 async def correlation_heatmap(data: Dict[str, List[Any]], variables: Optional[List[str]] = None, title: str = "Correlation Heatmap", return_image: bool = True) -> Dict[str, Any]:
     """Create correlation heatmaps."""
+    # Generate unique filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    filename = f"correlation_heatmap_{timestamp}.png"
+    file_path = str(PLOTS_DIR / filename)
+
     script = """
     library(ggplot2)
     library(reshape2)
-    library(base64enc)
 
     df <- as.data.frame(data)
 
@@ -948,19 +948,13 @@ async def correlation_heatmap(data: Dict[str, List[Any]], variables: Optional[Li
         ggtitle(title)
 
     if (return_image) {
-        temp_file <- tempfile(fileext = ".png")
-        ggsave(temp_file, plot = p, width = 8, height = 8)
-
-        img_data <- readBin(temp_file, "raw", file.info(temp_file)$size)
-        img_base64 <- base64encode(img_data)
-        unlink(temp_file)
-
-        result <- list(image = img_base64, format = "png")
+        ggsave(output_file, plot = p, width = 8, height = 8)
+        result <- list(file_path = output_file, name = filename, format = "png")
     } else {
         result <- list(correlation_matrix = as.data.frame(cor_matrix))
     }
     """
-    return await r_executor.execute(script, {"data": data, "variables": variables, "title": title, "return_image": return_image})
+    return await r_executor.execute(script, {"data": data, "variables": variables, "title": title, "return_image": return_image, "output_file": file_path, "filename": filename})
 
 # ============================================================================
 # 7. FILE OPERATIONS (3 tools)
