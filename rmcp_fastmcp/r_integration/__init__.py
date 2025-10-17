@@ -1,0 +1,1 @@
+"""R integration module for FastMCP server."""

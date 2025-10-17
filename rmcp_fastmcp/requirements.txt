@@ -1,0 +1,45 @@
+# FastMCP R Statistical Analysis Server Requirements
+# Python 3.11+ required
+
+# Core MCP dependencies
+fastmcp>=2.12.4
+mcp-python>=0.1.4
+mcp>=1.17.0
+
+# FastMCP dependencies (automatically included with fastmcp but listed for clarity)
+pydantic>=2.11.0
+pydantic-settings>=2.5.2
+httpx>=0.28.1
+httpx-sse>=0.4.0
+uvicorn>=0.31.1
+starlette>=0.27.0
+sse-starlette>=3.0.0
+python-multipart>=0.0.9
+
+# Additional FastMCP features
+authlib>=1.5.2
+cyclopts>=3.0.0
+exceptiongroup>=1.2.2
+openapi-core>=0.19.5
+openapi-pydantic>=0.5.1
+pyperclip>=1.9.0
+python-dotenv>=1.1.0
+rich>=13.9.4
+
+# Data handling
+jsonschema>=4.20.0
+
+# Development dependencies (optional)
+# pytest>=8.0.0
+# pytest-asyncio>=0.21.0
+# pytest-cov>=5.0.0
+# black>=23.0.0
+# isort>=5.12.0
+# mypy>=1.5.0
+#
+# # For testing HTTP transport
+# httpx>=0.25.0
+#
+# # For data manipulation examples (optional)
+# pandas>=1.5.0
+# numpy>=1.20.0
