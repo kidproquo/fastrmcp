@@ -82,6 +82,7 @@ temp_*.R
 temp_*.json
 *.log
 Rplots.pdf
+.mcp.json
 
 # Prevent standalone test files at root
 /test_*.py
@@ -95,6 +96,9 @@ test_*.csv
 *.jpeg
 *.gif
 *.svg
+
+# Generated outputs
+generated_outputs/
 
 # MyPy
 .mypy_cache/
